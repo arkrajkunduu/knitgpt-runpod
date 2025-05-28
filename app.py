@@ -5,9 +5,14 @@ from PIL import Image
 import torch
 from transformers import PaliGemmaProcessor, PaliGemmaForConditionalGeneration
 from peft import PeftModel
+from huggingface_hub import login
+
+# 🔐 Hugging Face login
+login(token="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")  # 🔁 Replace this with your real Hugging Face token
 
 app = Flask(__name__)
 
+# Model config
 base_model_id = "google/paligemma2-3b-pt-224"
 adapter_repo_id = "arkrajkundu/knitGPT_v1.0"
 image_resize = (128, 128)
@@ -15,6 +20,7 @@ max_new_tokens = 256
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Load model + processor
 processor = PaliGemmaProcessor.from_pretrained(base_model_id)
 model = PaliGemmaForConditionalGeneration.from_pretrained(base_model_id)
 model = PeftModel.from_pretrained(model, adapter_repo_id)
