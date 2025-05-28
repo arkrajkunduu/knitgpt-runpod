@@ -1,7 +1,8 @@
-import os
+import base64
+import io
 from flask import Flask, request, jsonify
-import torch
 from PIL import Image
+import torch
 from transformers import PaliGemmaProcessor, PaliGemmaForConditionalGeneration
 from peft import PeftModel
 
@@ -20,23 +21,22 @@ model = PeftModel.from_pretrained(model, adapter_repo_id)
 model.to(device)
 model.eval()
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    if "image" not in request.files:
-        return jsonify({"error": "Image is required"}), 400
-    image_file = request.files["image"]
+@app.route("/run", methods=["POST"])
+def run():
+    data = request.get_json()
+    prompt = data["input"].get("prompt", "How to knit this pattern?")
+    image_base64 = data["input"].get("image_base64")
+
+    if not image_base64:
+        return jsonify({"error": "Missing image_base64"}), 400
 
     try:
-        image = Image.open(image_file).convert("RGB").resize(image_resize)
+        image_bytes = base64.b64decode(image_base64)
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize(image_resize)
     except Exception as e:
-        return jsonify({"error": f"Failed to process image: {str(e)}"}), 500
+        return jsonify({"error": f"Invalid image data: {str(e)}"}), 400
 
-    prompt = request.form.get("prompt", "How to knit this pattern?")
-    inputs = processor(
-        text=prompt,
-        images=image,
-        return_tensors="pt"
-    )
+    inputs = processor(text=prompt, images=image, return_tensors="pt")
     for k, v in inputs.items():
         inputs[k] = v.to(device)
 
@@ -45,6 +45,3 @@ def predict():
 
     output = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
     return jsonify({"output": output})
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
