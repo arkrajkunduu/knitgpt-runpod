@@ -20,10 +20,12 @@ max_new_tokens = 256
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+cache_dir = "/mnt/vol/huggingface_cache"
+
 # Load model + processor
-processor = PaliGemmaProcessor.from_pretrained(base_model_id)
-model = PaliGemmaForConditionalGeneration.from_pretrained(base_model_id)
-model = PeftModel.from_pretrained(model, adapter_repo_id)
+processor = PaliGemmaProcessor.from_pretrained(base_model_id, cache_dir=cache_dir)
+model = PaliGemmaForConditionalGeneration.from_pretrained(base_model_id, cache_dir=cache_dir)
+model = PeftModel.from_pretrained(model, adapter_repo_id, cache_dir=cache_dir)
 model.to(device)
 model.eval()
 
