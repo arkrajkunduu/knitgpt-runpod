@@ -1,3 +1,7 @@
+import shutil
+total, used, free = shutil.disk_usage("/mnt/vol")
+print(f"💾 Disk at /mnt/vol: Total: {total // (2**30)} GB | Used: {used // (2**30)} GB | Free: {free // (2**30)} GB")
+
 import base64
 import io
 from flask import Flask, request, jsonify
